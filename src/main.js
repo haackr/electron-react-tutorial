@@ -2,6 +2,7 @@
 const { app, BrowserWindow, Menu, dialog } = require("electron");
 const path = require("path");
 const fs = require("fs");
+const { windowsStore } = require("process");
 
 function createWindow() {
   const isMac = process.platform === "darwin";
@@ -13,6 +14,7 @@ function createWindow() {
       nodeIntegration: true,
       preload: path.join(__dirname, "preload.js"),
     },
+    titleBarStyle: "hidden",
   });
 
   const template = [
@@ -41,7 +43,9 @@ function createWindow() {
       submenu: [
         {
           label: "Open Folder",
-          click: () => {},
+          click: () => {
+            openDir(mainWindow);
+          },
         },
         {
           label: "Open File",
@@ -189,5 +193,25 @@ async function openFile(window) {
 
   const fileContent = fs.readFileSync(file).toString();
   console.log(fileContent);
-  window.webContents.send("new file", fileContent);
+  window.webContents.send("new-file", fileContent);
+}
+
+async function openDir(window) {
+  const directory = await dialog.showOpenDialog(window, {
+    properties: ["openDirectory"],
+  });
+
+  if (!directory) return;
+
+  const dir = directory.filePaths[0];
+
+  console.log(directory);
+
+  fs.readdir(dir, (err, files) => {
+    const mdFiles = files
+      .filter((file) => file.includes(".md") || file.includes(".markdown"))
+      .map((file) => path.join(dir, file));
+    console.log(mdFiles);
+    window.webContents.send("new-dir", mdFiles, dir);
+  });
 }
