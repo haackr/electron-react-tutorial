@@ -1,27 +1,22 @@
 import logo from "./logo.svg";
 import "./App.css";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import Markdown from "markdown-to-jsx";
 const { ipcRenderer } = window.require("electron");
 
 function App() {
   const [loadedFile, setLoadedFile] = useState("");
 
+  useEffect(() => {
+    ipcRenderer.on("new file", (event, fileContent) => {
+      console.log(fileContent);
+      setLoadedFile(fileContent);
+    });
+  }, []);
+
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      <Markdown>{loadedFile}</Markdown>
     </div>
   );
 }
